@@ -28,36 +28,42 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' }}
     needs: [ build_and_push ]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Copy files via SSH key
+      - name: Copy files via SSH
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: "docker-compose.yml, nginx/nginx.conf"
-          target: .
-      - name: Install Docker Compose on remote server
+          source: "docker-compose.yml,nginx/nginx.conf"
+          target: ~/
+
+      - name: Install Docker Compose and Fix Permissions
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            # Install Docker Compose plugin
             sudo apt-get update
-            sudo apt-get install -y docker-compose
-            sudo usermod -aG docker $USER  # Add user to docker group
-            # Alternatively, if the above doesn't take effect immediately:
-            newgrp docker || true
-      - name: Run docker-compose on remote server
+            sudo apt-get install -y docker-compose-plugin
+        
+            # Verify installation
+            docker compose version
+            
+            # Ensure user has docker permissions
+            sudo usermod -aG docker $USER
+            # Refresh group membership without logout
+            exec sg docker -c "echo Groups updated"
+
+      - name: Deploy Application
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            docker compose down || true
-            docker images -q | xargs -r docker rmi -f  # Safely remove images
+            cd ~/
+            docker compose down
             docker compose pull
             docker compose up -d
