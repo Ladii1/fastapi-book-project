@@ -28,5 +28,5 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: olayinkaadebisi/fastapiwithnginx:latest
+          tags: faruq13/fastapiwithnginx:latest
           labels: ${{ steps.meta.outputs.labels }}
