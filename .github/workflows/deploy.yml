@@ -34,8 +34,8 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: "docker-compose.yml,nginx/nginx.conf"
-          target: ~/
+          source: "docker-compose.yml, nginx/nginx.conf"
+          target: .
 
       - name: Install Docker Compose and Fix Permissions
         uses: appleboy/ssh-action@v1.0.0
